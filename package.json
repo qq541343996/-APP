@@ -1,0 +1,40 @@
+{
+  "name": "museum",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": ".",
+  "dependencies": {
+    "antd": "^3.21.4",
+    "antd-mobile": "^2.3.1",
+    "axios": "^0.18.0",
+    "jquery": "^3.4.1",
+    "node-sass-chokidar": "^1.2.2",
+    "react": "^16.3.2",
+    "react-amap": "^1.2.8",
+    "react-dom": "^16.3.2",
+    "react-mobile-datepicker": "^4.0.2",
+    "react-promise": "^2.0.2",
+    "react-redux": "^5.0.7",
+    "react-router-dom": "^4.2.2",
+    "react-scripts": "1.1.4",
+    "react-swipe": "^5.1.1",
+    "react-thunk": "^1.0.0",
+    "redux": "^4.0.0",
+    "swiper": "^4.2.6"
+  },
+  "scripts": {
+    "build-css": "node-sass-chokidar src/ -o src/",
+    "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "proxy": {
+    "/bizServer/service/v2/sms/sendCode": {
+      "target": "http://www.safphone.com:8081",
+      "host": "www.safphone.com:8081",
+      "changeOrigin": true
+    }
+  }
+}
