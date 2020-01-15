@@ -14,13 +14,19 @@ class subscribe extends Component {
         }
     }
     componentDidMount=()=>{
+        var u = navigator.userAgent, app = navigator.appVersion;
+        var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
+        var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
+
         const query = this.props.location.search==""?this.props.location.pathname:this.props.location.search
         const arr = query.split('&') // ['?userId=', 'id=7']
         const userId = arr[1].substr(7)
         const id = arr[2].substr(3)
         this.setState({
             userId:userId,
-            id:id
+            id:id,
+            isAndroid:isAndroid,
+            isIOS:isIOS
         },()=>{
             HttpClientpost(url+"/appBase/myInfo/actHostDetail/"+id,{}).then((e)=>{
                 console.log(e)
@@ -31,8 +37,12 @@ class subscribe extends Component {
         })
     }
     goBack=()=>{
-        window.android.jsBack()
-
+        const {isAndroid}=this.state
+        if(isAndroid){
+            window.android.jsBack()
+        }else{
+            window.webkit.messageHandlers.jsBack.postMessage([]);
+        }
         // this.props.history.goBack()
     }
 

@@ -302,7 +302,16 @@ kong=()=>{
 }
 //我的活动
 goAct=()=>{
-    window.android.jsStartMyActivityOrder()
+    var u = navigator.userAgent, app = navigator.appVersion;
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
+    var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
+    if(isAndroid){
+        window.android.jsStartMyActivityOrder()
+
+    }else{
+        window.webkit.messageHandlers.jsStartMyActivityOrder.postMessage([]);
+
+    }
 }
 close=()=>{
     this.setState({

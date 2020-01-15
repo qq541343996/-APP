@@ -53,6 +53,10 @@ class MuseumDetail extends Component {
         }
     }
     getDetail=()=>{
+        var u = navigator.userAgent, app = navigator.appVersion;
+        var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
+        var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
+
         const sessinUserId = JSON.parse(sessionStorage.getItem("userId"))
 
         const query = this.props.location.search==""?this.props.location.pathname:this.props.location.search
@@ -64,8 +68,9 @@ class MuseumDetail extends Component {
         this.setState({
             id:id,
             userId:sessinUserId?sessinUserId:userId,
-            showDown:down!="down"?false:true
-
+            showDown:down!="down"?false:true,
+            isIOS:isIOS,
+            isAndroid:isAndroid
         },()=>{
             const {userId,id}=this.state 
             this.getAllIcon(id)
@@ -94,8 +99,8 @@ class MuseumDetail extends Component {
         
     }
     componentWillMount(){
-        window.setCallback(this);
 
+        window.setCallback(this);
         this.getDetail()
         document.body.style.backgroundColor = "#F7F7F7"
     }
@@ -105,11 +110,16 @@ class MuseumDetail extends Component {
             return
         }
         const museumId = this.state.id
-        window.android.jsStartMap(3,museumId)
+        const isAndroid = this.state.isAndroid
+        if(isAndroid){
+            window.android.jsStartMap(3,museumId)
+        }else{
+            window.webkit.messageHandlers.jsStartMap.postMessage([3,museumId]);
+        }
     }
     //获取图标下是否有数据
     getAllIcon=(id)=>{
-        HttpClientpost(`http://47.98.101.202:40080/appShow/museum/iconDataCount/${id}`,{}).then((e)=>{
+        HttpClientpost(url+`/appShow/museum/iconDataCount/${id}`,{}).then((e)=>{
             console.log(e[3]>2)
             this.setState({
                 showIcon1:e[1]>0?true:false,
@@ -130,7 +140,7 @@ class MuseumDetail extends Component {
     }
     
     icon7=(name)=>{
-        HttpClientpost("http://47.98.101.202:40080/appBase/common/columnSearchList",{
+        HttpClientpost(url+"/appBase/common/columnSearchList",{
            keyword:name,
            searchType:1
         }).then((e)=>{
@@ -143,23 +153,41 @@ class MuseumDetail extends Component {
     //点击8个图标区
     btnIcon=(type)=>{
         const museumId = this.state.id
-        const {detail,icon3Url,icon5Url,icon4Url,icon6Url}=this.state
+
+        const {detail,icon3Url,icon5Url,icon4Url,icon6Url,isAndroid}=this.state
+        if(this.state.showDown){
+            Toast.info("请下载APP",1.5,"",false)
+            return
+        }
         console.log(detail.name)
         // window.location.href=""
         if(type==1){
             if(this.state.showIcon1){
-                window.android.jsSpeakYou(museumId)
+                if(isAndroid){
+                    window.android.jsSpeakYou(museumId)
+                }else{
+                    window.webkit.messageHandlers.jsSpeakYou.postMessage([museumId]);
+                }
             }
         }
         if(type==2){
+            console.log(museumId)
             if(this.state.showIcon2){
-                window.android.lookToMuseumCollection("2",museumId)
+                if(isAndroid){
+                    window.android.lookToMuseumCollection("2",museumId)
+                }else{
+                    window.webkit.messageHandlers.lookToMuseumCollection.postMessage(["2",museumId]);
+                }
             }
         }
         if(type==3){
             if(this.state.showIcon3){
                 if(icon3Url>1){
-                    window.android.jsStartPanoramicNavigation5G(museumId)
+                    if(isAndroid){
+                        window.android.jsStartPanoramicNavigation5G(museumId)
+                    }else{
+                        window.webkit.messageHandlers.jsStartPanoramicNavigation5G.postMessage([museumId]);
+                    }
                 }else{
                     window.location.href=icon3Url
                 }
@@ -182,12 +210,20 @@ class MuseumDetail extends Component {
         }
         if(type==7){
             if(this.state.showIcon7){
-                window.android.lookToExhibitopnList(detail.name)
+                if(isAndroid){
+                    window.android.lookToExhibitopnList(detail.name)
+                }else{
+                    window.webkit.messageHandlers.lookToExhibitopnList.postMessage([detail.name]);
+                }
             }
         }
         if(type==8){
             if(this.state.showIcon8){
-                window.android.jsStartMuseumVideo5G(museumId)
+                if(isAndroid){
+                    window.android.jsStartMuseumVideo5G(museumId)
+                }else{
+                    window.webkit.messageHandlers.jsStartMuseumVideo5G.postMessage([museumId]);
+                }
             }
         }
         
@@ -238,9 +274,9 @@ class MuseumDetail extends Component {
                                     // 判断状态是否正确
                                     console.log(results)
                                     if(results){
-                                        if(results.Sq){
+                                        if(results.Tq){
                                             _that.setState({
-                                                address:results.Sq[0].address
+                                                address:results.Tq[0].address
                                             })
                                         }
                                     }
@@ -254,6 +290,8 @@ class MuseumDetail extends Component {
                        
                     })
                 }
+            }).catch((err)=>{
+                Toast.info("服务器繁忙，请稍后再试")
             })
     }
     goList(id){
@@ -262,13 +300,19 @@ class MuseumDetail extends Component {
     }
     goBack=()=>{
         // this.props.history.goBack()
-        window.android.jsBack()
+        const {isAndroid} = this.state
+
+        if(isAndroid){
+            window.android.jsBack()
+        }else{
+            window.webkit.messageHandlers.jsBack.postMessage([]);
+        }
 
     }
 
      //关注
      attention=()=>{
-        const {userId} = this.state
+        const {userId,isAndroid} = this.state
         const museumId = this.state.id
         if(this.state.showDown){
             Toast.info("请下载APP",1.5,"",false)
@@ -276,8 +320,13 @@ class MuseumDetail extends Component {
         }
         if(userId==""){
             Toast.info("请先登陆",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
 
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
             return
         }
         
@@ -418,14 +467,25 @@ class MuseumDetail extends Component {
 
     }
     subscribe=()=>{
-        const {detail,userId} =this.state
+        const {detail,userId,isAndroid} =this.state
         if(userId==""){
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
 
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
             return
         }
-        window.android.jsStartWebViewActivity2Subscribe(1,detail.id,detail.bookUrl)
+        if(isAndroid){
+            window.android.jsStartWebViewActivity2Subscribe(1,detail.id,detail.bookUrl)
+
+        }else{
+            window.webkit.messageHandlers.jsStartWebViewActivity2Subscribe.postMessage([1,detail.id,detail.bookUrl])
+
+        }
         // document.body.style.overflow = "hidden"
         // this.setState({
         //     show:true
@@ -453,7 +513,7 @@ class MuseumDetail extends Component {
                         <div style={{fontSize:"16px",marginBottom:"10px"}}>{detail.name}</div>
                         <button className={this.state.isAttention?"btn1":"btn"} style={{marginRight:"15px"}} onClick={this.attention}>{this.state.isAttention?"":<img src={jiahao} alt="" style={{width:"13px",marginRight:"3px",marginBottom:"2px"}}/>} {this.state.isAttention?"已关注":"关注"}</button>
                    </div>
-                   <div onClick={this.goLocation} style={{fontSize:"12px",color:"#8A8888"}}> <img src={dingwei} alt="" style={{width:"10px",height:"10px",marginRight:"5px",marginLeft:"15px"}}/> {this.state.address}</div>
+                   <div onClick={this.goLocation} style={{fontSize:"12px",color:"#8A8888"}}> <img src={dingwei} alt="" className="icon" style={{marginRight:"5px",marginLeft:"15px"}}/> {this.state.address}</div>
                     <div>
                         <div style={{display:"flex",justifyContent:"space-around",flexWrap:"wrap",marginTop:"10px"}}>
                             <div onClick={this.btnIcon.bind(this,1)} style={{display:"flex",flexDirection:"column",alignItems:"center",width:"25%"}}>

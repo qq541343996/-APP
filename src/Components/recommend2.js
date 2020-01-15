@@ -7,7 +7,7 @@ import liulan from '../Img/liulan.png'
 import shoucang from '../Img/shoucang.png'
 import shoucang2 from '../Img/shoucang2.png'
 import fenxiang from '../Img/fenxiang.png'
-import dizhi from '../Img/dizhi.png'
+import dizhi from '../Img/dingwei2.png'
 import headImg from '../Img/unie64d.png'
 import refresh from '../Img/refresh.png'
 import tanhao from '../Img/tanhao.png'
@@ -65,6 +65,9 @@ class activityDetail extends Component {
         const sessinUserId = JSON.parse(sessionStorage.getItem("userId"))
         const sessinVip = sessionStorage.getItem("isVip")
         const detail =JSON.parse(sessionStorage.getItem("recommend2Detail"))
+        var u = navigator.userAgent, app = navigator.appVersion;
+        var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
+        var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
 
         const query = this.props.location.search==""?this.props.location.pathname:this.props.location.search
         const arr = query.split('&') // ['?userId=', 'id=7']
@@ -75,7 +78,10 @@ class activityDetail extends Component {
             userId:sessinUserId?sessinUserId:userId,
             id:id,
             showDown:down!="down"?false:true,
-            isVip:sessinVip?sessinVip:false
+            isVip:sessinVip?sessinVip:false,
+            isAndroid:isAndroid,
+            isIOS:isIOS
+
         },()=>{
             if(detail!=null|detail!=""){
                 HttpClientpost(url+"/appAct/act/act/"+id,{
@@ -269,7 +275,7 @@ class activityDetail extends Component {
     
    }
     componentDidMount() {
-        HttpClientpost("http://47.98.101.202:40080/appBase/common/getAppVersion",{},{}).then((e)=>{
+        HttpClientpost(url+"/appBase/common/getAppVersion",{},{}).then((e)=>{
             console.log("banbenhao",e.versionName)
             this.setState({
                 versions:e.versionName
@@ -323,21 +329,31 @@ class activityDetail extends Component {
    
     goLocation=()=>{
         // this.props.history.push({pathname:`/location`,state:this.state.content})
-        const {id} = this.state
-        window.android.jsStartMap(2,id)
-
+        const {id,isAndroid} = this.state
+        if(isAndroid){
+            window.android.jsStartMap(2,id)
+        }else{
+            window.webkit.messageHandlers.jsStartMap.postMessage([2,id]);
+        }
     }
     //主办方或博物馆
     goMuseum=()=>{
+        if(this.state.showDown){
+            Toast.info("请下载APP",1.5,"",false)
+            return
+        }
         const {userId} = this.state
         const hostId = this.state.content.hostId
         this.props.history.push({pathname:`/sponsor/?a&userId=${userId}&id=${hostId}`,state:this.state.content})
     }
     //分享
     share=()=>{
-        const {content,id}=this.state
-        window.android.jsStartShareDialog ("博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/activityDetail?a&userId=&id="+id,content.logoUrl,id,2)
-
+        const {content,id,isAndroid}=this.state
+        if(isAndroid){
+            window.android.jsStartShareDialog ("博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/activityDetail?a&userId=&id="+id+"&"+"down",content.logoUrl,id,2)
+        }else{
+            window.webkit.messageHandlers.jsStartShareDialog.postMessage(["博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/activityDetail?a&userId=&id="+id+"&"+"down",content.logoUrl,id,2]);
+        }
     }
     //换一换
     huanyihuan=(name,id)=>{
@@ -428,7 +444,7 @@ class activityDetail extends Component {
     }
     //收藏
     collect=()=>{
-        const {userId} = this.state
+        const {userId,isAndroid} = this.state
         const msgId= this.state.content.id
         if(userId==""){
             if(this.state.showDown){
@@ -436,7 +452,11 @@ class activityDetail extends Component {
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([]);
+            }            
             return
         }
 
@@ -482,7 +502,7 @@ class activityDetail extends Component {
     }
     //关注
     attention=()=>{
-        const {userId} = this.state
+        const {userId,isAndroid} = this.state
         const hostId= this.state.content.hostId
         if(userId==""){
             if(this.state.showDown){
@@ -490,8 +510,11 @@ class activityDetail extends Component {
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
-
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([]);
+            }
             return
         }
        
@@ -633,15 +656,18 @@ class activityDetail extends Component {
     //     })
     //    }
     subscribe=()=>{
-        const {userId,id,isVip,content}=this.state
+        const {userId,id,isVip,content,isAndroid}=this.state
         if(userId==""){
             if(this.state.showDown){
                 Toast.info("请下载APP",1.5,"",false)
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
-
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([]);
+            }
             return
         }
         if(isVip){
@@ -654,18 +680,42 @@ class activityDetail extends Component {
     }
     //开通会员
     goOpenVip=()=>{
-        window.android.jsStartTabActivity(4)
+        const {isAndroid}=this.state
+        if(this.state.showDown){
+            Toast.info("请下载APP",1.5,"",false)
+            return
+        }
+        if(isAndroid){
+            window.android.jsStartVipActivity()
+        }else{
+            window.webkit.messageHandlers.jsStartVipActivity.postMessage([]);
+        }    
     }
     goHome=()=>{
-        window.android.jsStartTabActivity(0)
+        const {isAndroid}=this.state
+        if(isAndroid){
+            window.android.jsStartTabActivity(0)
+        }else{
+            window.webkit.messageHandlers.jsStartTabActivity.postMessage([0]);
+        }     
     }
     goBack=()=>{
-        window.android.jsBack()
+        const {isAndroid}=this.state
+        if(isAndroid){
+            window.android.jsBack()
+        }else{
+            window.webkit.messageHandlers.jsBack.postMessage([]);
+        }    
     }
     down=()=>{
+        const {isAndroid} = this.state
         var a = document.createElement('a');
-        a.href = "http://museum.renneng.net/version/Museum.apk";
-        a.click();
+        if(isAndroid){
+            a.href = "http://museum.renneng.net/version/Museum.apk";
+            a.click();
+        }else{
+            Toast.info("IOS暂未开放")
+        }
     }
     render() {
         const {content,showDown,collectCount,shareCount,startTime,endTime,versions} = this.state
@@ -695,9 +745,15 @@ class activityDetail extends Component {
                 <div className="content1">
                     <div style={{display:"flex",justifyContent:"space-between",padding:"0 15px"}}>
                         <div style={{fontSize:"16px",color:"#2B2B2B",width:"80%"}}>{content.actName}</div>
-                        {content.price===null?<p style={{color:"red",fontSize:"14px",width:"20%",textAlign:"center"}}>免费</p>:
-                        <p style={{color:"#FF2828",fontSize:"16px"}}>￥{content.price}</p>
-    
+                        {content.price===0?<p style={{color:"red",fontSize:"14px",width:"20%",textAlign:"center"}}>免费</p>:
+                        <div style={{display:"flex"}}>   
+                            <p style={{color:"#FF2828",fontSize:"16px",fontWeight:500}}>￥{content.price}</p>
+                            <p style={{color:"#FF2828",fontSize:"16px",fontWeight:500,display:content.ticket==0?"none":"flex",justifyContent:"center",alignItems:"center"}}>+</p>
+                            <div style={{height:"100%",display:content.ticket==0?"none":"flex",justifyContent:"center",alignItems:"center"}}>
+                                <p className="quanbac">{content.ticket}张</p>
+
+                            </div>
+                        </div>    
                     }
                     </div>
                     <div>
@@ -709,6 +765,20 @@ class activityDetail extends Component {
                                 </p>
                                 <p className="content1P" id="share" onClick={this.share} style={{marginLeft:"5px",color:"#ADADAD"}} onClick={this.share}><img className="content1Img" src={fenxiang} alt="" className="icon" style={{marginRight:"3px"}}/>分享 <span style={{marginLeft:"7px"}}>{shareCount}</span></p>
                             </div>
+                        </div>
+                        <div className="activityOpenVip">
+                            <div className="activityOpenVip2" onClick={this.goOpenVip}>
+                            <div style={{display:"flex"}}>
+                                    98元套餐VIP价￥{content.price/10*content.discount}
+                                    <p style={{color:"#A99059",display:content.ticket==0?"none":"black"}}>+</p>
+                                    <div style={{height:"100%",display:content.ticket==0?"none":"flex",justifyContent:"center",alignItems:"center"}}>
+                                        <p className="quanbac2">{content.ticket}张</p>
+
+                                    </div>
+                                </div>
+                                <div>立即开通 ></div>
+                            </div>
+
                         </div>
                         <p className="content1P" style={{marginLeft:"15px",marginTop:"5px"}}>活动时间：<span>{content.startTime} - {endTime.substr(0,10)==startTime.substr(0,10)?endTime.substr(10,6):endTime}</span></p>
                         <p className="content1P" style={{marginLeft:"15px",marginTop:"5px"}}>预约时间：<span>{content.bookTime}</span></p>
@@ -811,7 +881,7 @@ class activityDetail extends Component {
                                             <div className="title" style={{color:"black"}}>{item.actName}</div>
                                             <p className="address" style={{marginTop:"8px",color:"grey",fontSize:"11px"}}>{item.hostName?item.hostName:"博物馆在移动"}</p>
                                             <div style={{display:"flex",justifyContent:"space-between",marginTop:"5px"}}>
-                                            {item.price==null? 
+                                            {item.price==0? 
                                                 <p style={{color:"#FF2828",fontSize:"12px",marginTop:"5px"}}>免费</p>
                                                 :<p style={{color:"#FF2828",fontSize:"12px",marginTop:"5px"}}>￥{item.price}</p>}
                                                 {/* {

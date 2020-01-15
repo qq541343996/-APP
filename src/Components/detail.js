@@ -15,6 +15,8 @@ import zhuye from '../Img/zhuye.png'
 import left from '../Img/左.png'
 import logo from '../Img/logo.png'
 import jiahao from '../Img/加号.png'
+import tanhao from '../Img/tanhao.png'
+
 import {url} from '../url'
 import {HttpClient, HttpClientget, HttpClientpost,HttpClientput,HttpClientdelete,FetchApi} from '../AxiosUtils';
 import $ from  'jquery'
@@ -54,14 +56,15 @@ class Detail extends Component {
             collectCountBase:"",
             click:true,
             versions:"",
-            openAllShowInTro:false
+            openAllShowInTro:false,
+            showReport:false
         }
     }
 
     componentWillMount(){
-        // var u = navigator.userAgent, app = navigator.appVersion;
-        // var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
-        // var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
+        var u = navigator.userAgent, app = navigator.appVersion;
+        var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1
+        var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)
         // console.log(isIOS,isAndroid)
         // window.scrollTo(0,0)
 
@@ -80,7 +83,9 @@ class Detail extends Component {
         this.setState({
             userId:sessinUserId?sessinUserId:userId,
             id:id,
-            showDown:down!="down"?false:true
+            showDown:down!="down"?false:true,
+            isAndroid:isAndroid,
+            isIOS:isIOS
         },()=>{
             console.log("userID",this.state.userId)
             console.log("时间戳",timestamp)
@@ -171,7 +176,7 @@ class Detail extends Component {
     }
     componentDidMount() {
         window.addEventListener('scroll', this.handleScroll.bind(this));
-        HttpClientpost("http://47.98.101.202:40080/appBase/common/getAppVersion",{},{}).then((e)=>{
+        HttpClientpost(url+"/appBase/common/getAppVersion",{},{}).then((e)=>{
             console.log("banbenhao",e.versionName)
             this.setState({
                 versions:e.versionName
@@ -322,10 +327,18 @@ class Detail extends Component {
             Toast.info("请下载APP",1.5,"",false)
             return
         }
-        const {id} = this.state
-        window.android.jsStartMap(1,id)
+        const {id,isAndroid} = this.state
+        if(isAndroid){
+            window.android.jsStartMap(1,id)
+        }else{
+            window.webkit.messageHandlers.jsStartMap.postMessage([1,id]);
+        }
     }
     goMuseum=()=>{
+        if(this.state.showDown){
+            Toast.info("请下载APP",1.5,"",false)
+            return
+        }
         document.body.style.overflow = ""
 
         this.setState({
@@ -348,12 +361,18 @@ class Detail extends Component {
     }
     //分享
     share=()=>{
-        const {content,id}=this.state
+        const {content,id,isAndroid}=this.state
         if(this.state.showDown){
             Toast.info("请下载APP",1.5,"",false)
             return
         }
-        window.android.jsStartShareDialog ("博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/detail?a&userId=&id="+id+"&"+"down",content.picture,id,1)
+        if(isAndroid){
+            window.android.jsStartShareDialog ("博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/detail?a&userId=&id="+id+"&"+"down",content.picture,id,1)
+
+        }else{
+            window.webkit.messageHandlers.jsStartShareDialog.postMessage (["博物馆在移动",content.title,"http://museum.renneng.net/museumAPP/index.html#/detail?a&userId=&id="+id+"&"+"down",content.picture,id,1])
+
+        }
     }
     //换一换
     huanyihuan=(name,id)=>{
@@ -407,13 +426,20 @@ class Detail extends Component {
     collect=()=>{
         const id = this.state.userId
         const msgId = this.state.content.id
+        const {isAndroid} =this.state
         if(this.state.showDown){
             Toast.info("请下载APP",1.5,"",false)
             return
         }
         if(id==""){
             Toast.info("请先登陆",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
             return
         }
         this.setState({
@@ -474,14 +500,21 @@ class Detail extends Component {
     attention=()=>{
         const userId =this.state.userId
         const museumId =this.state.content.museumId
+        const {isAndroid} =this.state
+
         if(userId==""){
             if(this.state.showDown){
                 Toast.info("请下载APP",1.5,"",false)
                 return
             }
             Toast.info("请先登陆",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
 
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
             return
         }
        
@@ -598,14 +631,20 @@ class Detail extends Component {
         }
     }
     comment=()=>{
-        const {content,userId} =this.state
+        const {content,userId,isAndroid} =this.state
         if(userId==""){
             if(this.state.showDown){
                 Toast.info("请下载APP",1.5,"",false)
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
 
             return
         }
@@ -617,14 +656,20 @@ class Detail extends Component {
     }
     rate=()=>{
 
-        const {content,userId} =this.state
+        const {content,userId,isAndroid} =this.state
         if(userId==""){
             if(this.state.showDown){
                 Toast.info("请下载APP",1.5,"",false)
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
+
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
 
             return
         }
@@ -636,18 +681,29 @@ class Detail extends Component {
 
     }
     subscribe=()=>{
-        const {content,userId} =this.state
+        const {content,userId,isAndroid} =this.state
         if(userId==""){
             if(this.state.showDown){
                 Toast.info("请下载APP",1.5,"",false)
                 return
             }
             Toast.info("请先登录",1.5,"",false)
-            window.android.jsStartLoginActivity()
+            if(isAndroid){
+                window.android.jsStartLoginActivity()
 
+            }else{
+                window.webkit.messageHandlers.jsStartLoginActivity.postMessage([])
+
+            }
             return
         }
-        window.android.jsStartWebViewActivity2Subscribe(2,content.id,content.bookUrl)
+        if(isAndroid){
+            window.android.jsStartWebViewActivity2Subscribe(2,content.id,content.bookUrl)
+
+        }else{
+            window.webkit.messageHandlers.jsStartWebViewActivity2Subscribe.postMessage([2,content.id,content.bookUrl])
+
+        }
         // document.body.style.overflow = "hidden"
         // this.setState({
         //     show:true
@@ -660,15 +716,31 @@ class Detail extends Component {
         })
     }
     goHome=()=>{
-        window.android.jsStartTabActivity("0")
+        const {isAndroid} = this.state
+        if(isAndroid){
+            window.android.jsStartTabActivity("0")
+        }else{
+            window.webkit.messageHandlers.jsStartTabActivity.postMessage(["0"])
+        }
     }
     goBack=()=>{
-        window.android.jsBack()
+        const {isAndroid} = this.state
+        if(isAndroid){
+            window.android.jsBack()
+        }else{
+            window.webkit.messageHandlers.jsBack.postMessage([])
+        }
     }
     down=()=>{
+        const {isAndroid} = this.state
         var a = document.createElement('a');
-        a.href = "http://museum.renneng.net/version/Museum.apk";
-        a.click();
+        if(isAndroid){
+            a.href = "http://museum.renneng.net/version/Museum.apk";
+            a.click();
+        }else{
+            Toast.info("IOS暂未开放")
+        }
+       
     }
     kong=()=>{
 
@@ -696,8 +768,36 @@ class Detail extends Component {
     //                     }
     //                 })
     // }
+
+    sidebarTouchMove=(e)=>{
+        console.log(111)
+        e.preventDefault()
+    }
+    showReport=()=>{
+        this.setState({
+            showReport:true
+        },()=>{
+            document.getElementById('srollDetail').addEventListener("touchmove",this.sidebarTouchMove,false)  
+        })
+    }
+    report=()=>{
+        HttpClientpost(url+"/appBase/common/getAppVersion",{},{}).then((e)=>{
+            Toast.info("举报成功")
+            this.setState({
+                showReport:false
+            })
+        })
+    }
+    closeReport=()=>{
+        this.setState({
+            showReport:false
+        },()=>{
+            // 为元素添加事件监听   
+            document.getElementById('srollDetail').removeEventListener("touchmove",this.sidebarTouchMove,false)  
+        })
+    }
     render() {
-        const {content,showDown,collectCountBase,shareCountBase,click,isLate,versions,openAllShowInTro} = this.state
+        const {content,showDown,collectCountBase,shareCountBase,click,isLate,versions,openAllShowInTro,showReport} = this.state
         const location = content.location
         const _that =this
         return (
@@ -818,7 +918,7 @@ class Detail extends Component {
                             {
                                 this.state.into3==""?"暂无内容":
                                 this.state.into3.map((item,index)=>{
-                                    return <div key={index+"into3"} style={{display:"flex",borderBottom: this.state.into3.length==1||this.state.into3.length-1==index?"":"1px solid #F1F1F1",padding:"10px 0"}}>
+                                    return <div key={index+"into3"} onClick={this.showReport} style={{display:"flex",borderBottom: this.state.into3.length==1||this.state.into3.length-1==index?"":"1px solid #F1F1F1",padding:"10px 0"}}>
                                             <img src={item.headImgUrl?item.headImgUrl:headImg} alt="" style={{width:"42px",height:"42px",borderRadius:"50%"}}/>
                                             <div style={{marginLeft:"5px",width:"100%"}}>
                                                 <div style={{width:"100%",display:"flex",justifyContent:"space-between"}}>
@@ -975,6 +1075,29 @@ class Detail extends Component {
                                         <div style={{width:"100%",display:"flex",justifyContent:"center",marginTop:"10px"}}>
                                             <button onClick={this.close} style={{background:"#D0D0D0",color:"white",width:"160px",height:"30px",textAlign:"center",lineHeight:"30px",border:"0",borderRadius:"3px"}}>放弃预约</button>
                                         </div>
+                            </div>
+                        </div>
+                    </div>:""
+
+                }
+                {
+                    this.state.showReport?
+                    <div>
+                        <div style={{position:"fixed",bottom:0,width:"100%",height:"100%",background:"black",opacity:"0.3"}}>
+                        </div>
+                        <div style={{position:"fixed",top:"30%",left:0,width:"100%",display:"flex",justifyContent:"center",alignItems:"center"}}>
+                            <div style={{width:"226px",height:"146px",background:"white",opacity:1,borderRadius:"5px" }}>
+                                <div style={{width:"100%",display:"flex",justifyContent:"center",marginTop:"10px"}}>
+                                    <img src={tanhao} alt="" style={{width:"33px",height:"33px"}}/>
+                                </div>
+                                <div style={{width:"100%",display:"flex",justifyContent:"center",marginTop:"10px"}}>
+                                    <p style={{fontSize:"15px",color:"#2B2B2B"}}>是否举报该条评论</p>
+                                </div>
+                                <div style={{width:"100%",display:"flex",justifyContent:"space-around",marginTop:"20px"}}>
+                                    <button onClick={this.report} style={{background:"#F4B639",color:"white",width:"96px",height:"30px",textAlign:"center",lineHeight:"30px",border:"0",borderRadius:"3px"}}>举报</button>
+
+                                    <button onClick={this.closeReport} style={{background:"#D0D0D0",color:"white",width:"96px",height:"30px",textAlign:"center",lineHeight:"30px",border:"0",borderRadius:"3px"}}>关闭</button>
+                                </div>
                             </div>
                         </div>
                     </div>:""

@@ -8,7 +8,6 @@ import loading from '../Img/loading.gif'
 import bianup from '../Img/bianup.png'
 import biandown from '../Img/biandown.png'
 import refresh from '../Img/refresh.png'
-import back from '../Img/activityback2.png'
 import {url} from '../url'
 class activetyList extends Component {
     constructor(props) {
@@ -104,7 +103,6 @@ class activetyList extends Component {
                         {/* <div className="newBackground3">
 
                         </div> */}
-                        <img src={back} alt="" style={{width:"100%",height:"110px"}}/>
                         <div style={{display:"flex",position:"relative",top:-60}}>
                         <div className="left" style={{width:"50%"}}>
                             {

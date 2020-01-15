@@ -8,7 +8,6 @@ import loading from '../Img/loading.gif'
 import bianup from '../Img/lankuangup.png'
 import biandown from '../Img/lankuangdown.png'
 import refresh from '../Img/refresh.png'
-import back from '../Img/newBackground2.png'
 import {url} from '../url'
 window.getNewList = function() {
     if(window.callback != undefined) {
@@ -128,7 +127,6 @@ class spreadtrum1 extends Component {
                         {/* <div className="newBackground2">
 
                         </div> */}
-                        <img src={back} alt="" style={{width:"100%",height:"100px"}}/>
                         <div style={{display:"flex",position:"relative",top:-50}} id="PullToRefresh">
                         <div className="left" style={{width:"50%"}}>
                             {
